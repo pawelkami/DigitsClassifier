@@ -3,6 +3,7 @@ import os.path
 import numpy as np
 import cv2
 import pickle
+from common import clock, mosaic
 
 PICKLE_TRAINING_SET = "training_set.pickle"
 PICKLE_TESTING_SET = "testing_set.pickle"
@@ -146,11 +147,58 @@ def get_hog():
     return hog
 
 
+class StatModel(object):
+    def load(self, fn):
+        self.model.load(fn)  # Known bug: https://github.com/opencv/opencv/issues/4969
+
+    def save(self, fn):
+        self.model.save(fn)
+
+
+class SVM(StatModel):
+    def __init__(self, C=12.5, gamma=0.50625):
+        self.model = cv2.ml.SVM_create()
+        self.model.setGamma(gamma)
+        self.model.setC(C)
+        self.model.setKernel(cv2.ml.SVM_RBF)
+        self.model.setType(cv2.ml.SVM_C_SVC)
+
+    def train(self, samples, responses):
+        self.model.train(samples, cv2.ml.ROW_SAMPLE, responses.astype(int))
+
+    def predict(self, samples):
+        return self.model.predict(samples)[1].ravel()
+
+
+def evaluate_model(model, digits, samples, labels):
+    resp = model.predict(samples)
+    err = (labels != resp).mean()
+    print('Accuracy: %.2f %%' % ((1 - err) * 100))
+
+    confusion = np.zeros((10, 10), np.int32)
+    for i, j in zip(labels, resp):
+        confusion[int(i), int(j)] += 1
+    print('confusion matrix:')
+    print(confusion)
+
+    vis = []
+    for img, flag in zip(digits, resp == labels):
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        if not flag:
+            img[..., :2] = 0
+
+        vis.append(img)
+    #return mosaic(75, vis)
+
+
+
 if __name__ == '__main__':
     training = True
     print('Reading MNIST Training set')
     training_set, training_labels = read_MNIST(60000, training)
     training_set_np = list(map(grayscale_pixelarray_to_np, training_set))
+    training_labels_np = np.array(training_labels, dtype='int')
+    training_labels_np = np.squeeze(training_labels)
 
     hog = get_hog()
 
@@ -160,8 +208,24 @@ if __name__ == '__main__':
         hog_descriptors.append(hog.compute(img))
     hog_descriptors = np.squeeze(hog_descriptors)
 
+
+    model = SVM()
+    model.train(hog_descriptors, training_labels_np)
+
+
     print('Reading MNIST Testing set')
     testing_set, testing_labels = read_MNIST(10000, not training)
     testing_set_np = list(map(grayscale_pixelarray_to_np, testing_set))
+    testing_labels_np = np.array(testing_labels, dtype='int')
+    testing_labels_np = np.squeeze(testing_labels_np)
 
+    hog_descriptors_test = []
+    for img in testing_set_np:
+        hog_descriptors_test.append(hog.compute(img))
+    hog_descriptors_test = np.squeeze(hog_descriptors_test)
 
+    print('Evaluating model ... ')
+    vis2 = evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
+    cv2.imwrite("digits-classification.jpg", vis2)
+    cv2.imshow("Vis", vis2)
+    cv2.waitKey(0)
