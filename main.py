@@ -225,7 +225,8 @@ if __name__ == '__main__':
     hog_descriptors_test = np.squeeze(hog_descriptors_test)
 
     print('Evaluating model ... ')
-    vis2 = evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
-    cv2.imwrite("digits-classification.jpg", vis2)
-    cv2.imshow("Vis", vis2)
-    cv2.waitKey(0)
+    evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
+    #vis2 = evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
+    #cv2.imwrite("digits-classification.jpg", vis2)
+    #cv2.imshow("Vis", vis2)
+    #cv2.waitKey(0)
