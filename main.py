@@ -5,6 +5,7 @@ import cv2
 import pickle
 
 PICKLE_TRAINING_SET = "training_set.pickle"
+PICKLE_TESTING_SET = "testing_set.pickle"
 IMAGE_HEIGHT = IMAGE_WEIGHT = 28
 
 
@@ -15,16 +16,20 @@ def read_MNIST(howMany, train=True):
                     setup so that it will always load from the first image to the howManyth.
         train ->    used to determine if the training or the testing data has to be loaded.
     """
-    if os.path.isfile(PICKLE_TRAINING_SET):
-        with open(PICKLE_TRAINING_SET, 'rb') as file:
-            image_list, lable_list = pickle.load(file)
-            return image_list, lable_list
 
     if train:
+        if os.path.isfile(PICKLE_TRAINING_SET):
+            with open(PICKLE_TRAINING_SET, 'rb') as file:
+                image_list, lable_list = pickle.load(file)
+                return image_list, lable_list
         images = open('train-images.idx3-ubyte', 'rb')
         labels = open('train-labels.idx1-ubyte', 'rb')
         print('Reading Training Data')
     else:
+        if os.path.isfile(PICKLE_TESTING_SET):
+            with open(PICKLE_TESTING_SET, 'rb') as file:
+                image_list, lable_list = pickle.load(file)
+                return image_list, lable_list
         images = open('t10k-images.idx3-ubyte', 'rb')
         labels = open('t10k-labels.idx1-ubyte', 'rb')
         print('Reading Test Data')
@@ -87,8 +92,12 @@ def read_MNIST(howMany, train=True):
         image_list.append(image)
     images.close()
 
-    with open(PICKLE_TRAINING_SET, 'wb') as file:
-        pickle.dump((image_list, lable_list), file)
+    if train:
+        with open(PICKLE_TRAINING_SET, 'wb') as file:
+            pickle.dump((image_list, lable_list), file)
+    else:
+        with open(PICKLE_TESTING_SET, 'wb') as file:
+            pickle.dump((image_list, lable_list), file)
 
     return image_list, lable_list
 
@@ -139,10 +148,8 @@ def get_hog():
 
 if __name__ == '__main__':
     training = True
-    print('Reading MNIST')
-    # first read the training data
+    print('Reading MNIST Training set')
     training_set, training_labels = read_MNIST(60000, training)
-
     training_set_np = list(map(grayscale_pixelarray_to_np, training_set))
 
     hog = get_hog()
@@ -152,3 +159,9 @@ if __name__ == '__main__':
     for img in training_set_np:
         hog_descriptors.append(hog.compute(img))
     hog_descriptors = np.squeeze(hog_descriptors)
+
+    print('Reading MNIST Testing set')
+    testing_set, testing_labels = read_MNIST(10000, not training)
+    testing_set_np = list(map(grayscale_pixelarray_to_np, testing_set))
+
+
