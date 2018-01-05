@@ -7,6 +7,7 @@ import pickle
 PICKLE_TRAINING_SET = "training_set.pickle"
 IMAGE_HEIGHT = IMAGE_WEIGHT = 28
 
+
 def read_MNIST(howMany, train=True):
     """
         Method to read the .idxY-ubyte files downloaded form http://yann.lecun.com/exdb/mnist/
@@ -91,10 +92,12 @@ def read_MNIST(howMany, train=True):
 
     return image_list, lable_list
 
-def grayscale_pixelarray_to_np (training_image):
+
+def grayscale_pixelarray_to_np(training_image):
     pixels = np.array(training_image, dtype='uint8')
     pixels = pixels.reshape((28, 28))
     return pixels
+
 
 def deskew(img):
     m = cv2.moments(img)
@@ -106,6 +109,34 @@ def deskew(img):
     return img
 
 
+def hu_moments(img):
+    moments = cv2.HuMoments(cv2.moments(img)).flatten()
+    for i in range(len(moments)):
+        moments[i] = np.float32(moments[i])
+    # print(moments)
+    return moments
+
+
+def get_hog():
+    winSize = (28, 28)
+    blockSize = (14, 14)
+    blockStride = (7, 7)
+    cellSize = (14, 14)
+    nbins = 9
+    derivAperture = 1
+    winSigma = -1.
+    histogramNormType = 0
+    L2HysThreshold = 0.2
+    gammaCorrection = 1
+    nlevels = 64
+    signedGradient = True
+
+    hog = cv2.HOGDescriptor(winSize, blockSize, blockStride, cellSize, nbins, derivAperture, winSigma,
+                            histogramNormType, L2HysThreshold, gammaCorrection, nlevels, signedGradient)
+
+    return hog
+
+
 if __name__ == '__main__':
     training = True
     print('Reading MNIST')
@@ -114,4 +145,10 @@ if __name__ == '__main__':
 
     training_set_np = list(map(grayscale_pixelarray_to_np, training_set))
 
+    hog = get_hog()
 
+    print('Calculating HoG descriptors')
+    hog_descriptors = []
+    for img in training_set_np:
+        hog_descriptors.append(hog.compute(img))
+    hog_descriptors = np.squeeze(hog_descriptors)
