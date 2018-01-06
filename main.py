@@ -3,7 +3,8 @@ import os.path
 import numpy as np
 import cv2
 import pickle
-from common import clock, mosaic
+from naivebayes import *
+from decisiontree import *
 
 PICKLE_TRAINING_SET = "training_set.pickle"
 PICKLE_TESTING_SET = "testing_set.pickle"
@@ -188,8 +189,7 @@ def evaluate_model(model, digits, samples, labels):
             img[..., :2] = 0
 
         vis.append(img)
-    #return mosaic(75, vis)
-
+        # return mosaic(75, vis)
 
 
 if __name__ == '__main__':
@@ -208,11 +208,6 @@ if __name__ == '__main__':
         hog_descriptors.append(hog.compute(img))
     hog_descriptors = np.squeeze(hog_descriptors)
 
-
-    model = SVM()
-    model.train(hog_descriptors, training_labels_np)
-
-
     print('Reading MNIST Testing set')
     testing_set, testing_labels = read_MNIST(10000, not training)
     testing_set_np = list(map(grayscale_pixelarray_to_np, testing_set))
@@ -224,9 +219,16 @@ if __name__ == '__main__':
         hog_descriptors_test.append(hog.compute(img))
     hog_descriptors_test = np.squeeze(hog_descriptors_test)
 
-    print('Evaluating model ... ')
-    evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
-    #vis2 = evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
-    #cv2.imwrite("digits-classification.jpg", vis2)
-    #cv2.imshow("Vis", vis2)
-    #cv2.waitKey(0)
+    algorithms = [SVM,
+                  # NaiveBayes,
+                  # DecisionTree
+                 ]  # odkomentować po zaimplementowaniu
+
+    for a in algorithms:
+        model = a()
+        model.train(hog_descriptors, training_labels_np)
+
+
+        print('Evaluating model ... ')
+        evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
+

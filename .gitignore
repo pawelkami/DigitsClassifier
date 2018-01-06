@@ -108,3 +108,5 @@ t10k-labels.idx1-ubyte
 
 # Pickle
 *.pickle
+
+.idea/*
