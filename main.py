@@ -220,14 +220,13 @@ if __name__ == '__main__':
     hog_descriptors_test = np.squeeze(hog_descriptors_test)
 
     algorithms = [SVM,
-                  # NaiveBayes,
+                  NaiveBayes,
                   # DecisionTree
                  ]  # odkomentować po zaimplementowaniu
 
     for a in algorithms:
         model = a()
         model.train(hog_descriptors, training_labels_np)
-
 
         print('Evaluating model ... ')
         evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
