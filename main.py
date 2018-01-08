@@ -5,6 +5,7 @@ import cv2
 import pickle
 from naivebayes import *
 from decisiontree import *
+import time
 
 PICKLE_TRAINING_SET = "training_set.pickle"
 PICKLE_TESTING_SET = "testing_set.pickle"
@@ -226,8 +227,14 @@ if __name__ == '__main__':
 
     for a in algorithms:
         model = a()
+        start = time.time()
         model.train(hog_descriptors, training_labels_np)
+        end = time.time()
+        print("Classifier {} trained in {} sec".format(model.__class__.__name__, end - start))
 
         print('Evaluating model ... ')
+        start = time.time()
         evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
+        end = time.time()
+        print("Classifier {} estimated in {} sec".format(model.__class__.__name__, end - start))
 
