@@ -5,6 +5,9 @@ import cv2
 import pickle
 from naivebayes import *
 from decisiontree import *
+import time
+from NeuralNetwork import NeuralNetworkHoG
+from ConvolutionalNeuralNetwork import ConvolutionalNeuralNetwork
 
 PICKLE_TRAINING_SET = "training_set.pickle"
 PICKLE_TESTING_SET = "testing_set.pickle"
@@ -182,14 +185,14 @@ def evaluate_model(model, digits, samples, labels):
     print('confusion matrix:')
     print(confusion)
 
-    vis = []
-    for img, flag in zip(digits, resp == labels):
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-        if not flag:
-            img[..., :2] = 0
-
-        vis.append(img)
-        # return mosaic(75, vis)
+    # vis = []
+    # for img, flag in zip(digits, resp == labels):
+    #     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    #     if not flag:
+    #         img[..., :2] = 0
+    #
+    #     vis.append(img)
+    #     # return mosaic(75, vis)
 
 
 if __name__ == '__main__':
@@ -219,16 +222,34 @@ if __name__ == '__main__':
         hog_descriptors_test.append(hog.compute(img))
     hog_descriptors_test = np.squeeze(hog_descriptors_test)
 
-    algorithms = [SVM,
-                  # NaiveBayes,
-                  # DecisionTree
-                 ]  # odkomentować po zaimplementowaniu
+    algorithmsHoG = [SVM,
+                     NaiveBayes,
+                     # DecisionTree,
+                     NeuralNetworkHoG
+                     ]  # odkomentować po zaimplementowaniu
 
-    for a in algorithms:
+    for a in algorithmsHoG:
         model = a()
+        start = time.time()
         model.train(hog_descriptors, training_labels_np)
-
+        end = time.time()
+        print("Classifier {} trained in {} sec".format(model.__class__.__name__, end - start))
 
         print('Evaluating model ... ')
+        start = time.time()
         evaluate_model(model, testing_set_np, hog_descriptors_test, testing_labels_np)
+        end = time.time()
+        print("Classifier {} estimated in {} sec".format(model.__class__.__name__, end - start))
 
+# CNN
+    model = ConvolutionalNeuralNetwork()
+    start = time.time()
+    model.train(epochs=10)
+    end = time.time()
+    print("Classifier {} trained in {} sec".format(model.__class__.__name__, end - start))
+
+    print('Evaluating model ... ')
+    start = time.time()
+    model.evaluate()
+    end = time.time()
+    print("Classifier {} estimated in {} sec".format(model.__class__.__name__, end - start))
