@@ -27,14 +27,14 @@ class NeuralNetworkHoG(ClassificationAlgorithm):
 
         self.optimizer = optim.SGD(self.model.parameters(), lr=learning_rate, momentum=momentum_rate)
 
-    def train(self, samples, responses, epoch_size=1):
+    def train(self, samples, responses, epochs=10):
         images = torch.from_numpy(samples)
         labels = responses.astype(np.long)
         labels = torch.from_numpy(labels)
         train_dataset = torch.utils.data.TensorDataset(images, labels)
         train_loader = torch.utils.data.DataLoader(train_dataset)
 
-        for epoch in range(1, epoch_size + 1):
+        for epoch in range(1, epochs + 1):
             self.model.train()
             for batch_idx, (data, target) in enumerate(train_loader):
                 if torch.cuda.is_available():
