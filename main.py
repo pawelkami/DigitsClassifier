@@ -222,11 +222,10 @@ if __name__ == '__main__':
         hog_descriptors_test.append(hog.compute(img))
     hog_descriptors_test = np.squeeze(hog_descriptors_test)
 
-    algorithmsHoG = [SVM,
-                     NaiveBayes,
-                     # DecisionTree,
+    algorithmsHoG = [NaiveBayes,
+                     DecisionTree,
                      NeuralNetworkHoG
-                     ]  # odkomentować po zaimplementowaniu
+                     ]
 
     for a in algorithmsHoG:
         model = a()
