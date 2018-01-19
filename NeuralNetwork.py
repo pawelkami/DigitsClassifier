@@ -8,17 +8,17 @@ import torch.utils.data as utils
 from torch.autograd import Variable
 import numpy as np
 
-
+# Model
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc = nn.Linear(81, 50)
+        self.fully_connected = nn.Linear(81, 50)
 
     def forward(self, x):
-        x = self.fc(x)
+        x = self.fully_connected(x)
         return F.log_softmax(x)
 
-
+# Class which represents classifier
 class NeuralNetworkHoG(ClassificationAlgorithm):
     def __init__(self, learning_rate=0.005, momentum_rate=0.5):
         self.model = Net()
@@ -28,12 +28,14 @@ class NeuralNetworkHoG(ClassificationAlgorithm):
         self.optimizer = optim.SGD(self.model.parameters(), lr=learning_rate, momentum=momentum_rate)
 
     def train(self, samples, responses, epochs=10):
+        # preparation of data for PyTorch
         images = torch.from_numpy(samples)
         labels = responses.astype(np.long)
         labels = torch.from_numpy(labels)
         train_dataset = torch.utils.data.TensorDataset(images, labels)
         train_loader = torch.utils.data.DataLoader(train_dataset)
 
+        # actual training organizes in epochs
         for epoch in range(1, epochs + 1):
             self.model.train()
             for batch_idx, (data, target) in enumerate(train_loader):
@@ -42,15 +44,18 @@ class NeuralNetworkHoG(ClassificationAlgorithm):
                 data, target = Variable(data), Variable(target)
                 self.optimizer.zero_grad()
                 output = self.model(data)
+                # negative log likelihood loss
                 loss = F.nll_loss(output, target)
+                # back propagation
                 loss.backward()
                 self.optimizer.step()
-                if batch_idx % 1000 == 0:
+                if batch_idx % 60000 == 0:
                     print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                         epoch, batch_idx * len(data), len(train_loader.dataset),
                                100. * batch_idx / len(train_loader), loss.data[0]))
 
     def predict(self, samples):
+        # predict images from test set (input as set of HoG with labels)
         images = torch.from_numpy(samples)
         if torch.cuda.is_available():
             images = images.cuda()
